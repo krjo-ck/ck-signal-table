@@ -4,7 +4,7 @@
   "description": "A CanKing extension showing CAN signal values in a table",
   "author": "Krister Johansson",
   "canking": {
-    "workspaceViewName": "Signal Table",
+    "workspaceViewName": "Signal Table (krjo-ck)",
     "types": [
       "WorkspaceView"
     ]
