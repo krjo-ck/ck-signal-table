@@ -83,8 +83,7 @@ function WorkspaceView() {
     }));
 
     // Update the session data with the new signal data
-    // Do the state update in a microtask to avoid doing a state update while rendering,
-    // which can cause issues with React's concurrent mode
+    // Defer persisted-state setter to avoid sync setState-in-effect lint violations.
     queueMicrotask(() => {
       setSessionData(curr => ({
         ...curr,
@@ -107,8 +106,7 @@ function WorkspaceView() {
 
   useEffect(() => {
     // Update the session data with the latest signal values
-    // Do the state update in a microtask to avoid doing a state update while rendering,
-    // which can cause issues with React's concurrent mode
+    // Defer persisted-state setter to avoid sync setState-in-effect lint violations.
     queueMicrotask(() => {
       setSessionData(curr => ({
         ...curr,
