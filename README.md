@@ -14,8 +14,13 @@ It also uses the useSignalData hook to subscribe on signal updates.
 
 If you want to run this extension inside CanKing then follow these steps:
 
-1. Download the ck-signal-table-1.0.0.tgz file from the v1.0.0 release
+1. Download the ck-signal-table-1.1.0.tgz file from the v1.1.0 release
 2. Start CanKing and select ```More->Extensions->Install...```
 3. Select the file and click Open
 
 The 'Signal Table' view will now be available inside CanKing.
+
+## Version History
+
+- **v1.1.0** Updated for CanKing 7.4
+- **v1.0.0** Initial version for CanKing 7.3

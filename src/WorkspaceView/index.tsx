@@ -5,18 +5,24 @@
 import { useSearchParams } from 'react-router-dom';
 import { useProjectData, useSessionData, useSignalData } from '@kvaser/canking-api/hooks';
 import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
-import { SelectSignalsControl } from '@kvaser/canking-api/controls';
-import { useCallback, useEffect } from 'react';
+import { SelectedSignalInfo, SelectSignalsControl } from '@kvaser/canking-api/controls';
+import { useCallback, useEffect, useMemo } from 'react';
 
 // If any data should be stored in the project file then add it to this interface
 interface IProjectData {
   // An array of selected qualified signal names
   qualifiedSignalNames: string[];
+  // An array of source IDs
+  // This was added to support new signal selection API in CanKing 7.4
+  // Should normally be an array with same length as qualifiedSignalNames, where each
+  // source ID corresponds to the signal with the same index in qualifiedSignalNames
+  sourceIds?: string[];
 }
 
 // Define any default values for the project data that will be used when the component is created
 const defaultProjectData: IProjectData = {
   qualifiedSignalNames: [],
+  sourceIds: [],
 };
 
 // If any data should be stored in the session data then add it to this interface
@@ -54,12 +60,13 @@ function WorkspaceView() {
   const { sessionData, setSessionData } = useSessionData<ISessionData>(id, defaultSessionData);
 
   // Handler for when the selected signals change
-  const handleSelectedSignalsChange = useCallback(
-    (qualifiedSignalNames: string[]) => {
+  const handleSelectedSignalInfosChange = useCallback(
+    (selectedSignalInfos: SelectedSignalInfo[]) => {
       // Update the project data with the new selected signals
       setProjectData(curr => ({
         ...curr,
-        qualifiedSignalNames,
+        qualifiedSignalNames: selectedSignalInfos.map(info => info.qualifiedName),
+        sourceIds: selectedSignalInfos.map(info => info.sourceId),
       }));
     },
     [setProjectData],
@@ -76,36 +83,52 @@ function WorkspaceView() {
     }));
 
     // Update the session data with the new signal data
-    setSessionData(curr => ({
-      ...curr,
-      signalData: newSignalData,
-    }));
+    // Defer persisted-state setter to avoid sync setState-in-effect lint violations.
+    queueMicrotask(() => {
+      setSessionData(curr => ({
+        ...curr,
+        signalData: newSignalData,
+      }));
+    });
   }, [projectData.qualifiedSignalNames, setSessionData]);
 
+  // Get subscribed signal info from project data
+  const subscribedSignals = useMemo(() => {
+    const signalInfos = projectData.qualifiedSignalNames.map((qualifiedName, index) => ({
+      qualifiedName,
+      sourceId: projectData.sourceIds ? (projectData.sourceIds[index] ?? '') : '',
+    }));
+    return signalInfos;
+  }, [projectData.qualifiedSignalNames, projectData.sourceIds]);
+
   // Subscribe on signal value updates
-  const signalDataUpdates = useSignalData(projectData.qualifiedSignalNames);
+  const signalDataUpdates = useSignalData(id, 'signalData', subscribedSignals);
+
   useEffect(() => {
     // Update the session data with the latest signal values
-    setSessionData(curr => ({
-      ...curr,
-      signalData: curr.signalData.map(signal => {
-        const signalDataUpdate = signalDataUpdates.find(s => s.qualifiedName === signal.qualifiedName);
-        return {
-          ...signal,
-          name: signalDataUpdate?.name ?? signal.name,
-          value: signalDataUpdate?.stringValue ?? signalDataUpdate?.doubleValue.toString() ?? signal.value,
-          unit: signalDataUpdate?.unit ?? signal.unit,
-        };
-      }),
-    }));
+    // Defer persisted-state setter to avoid sync setState-in-effect lint violations.
+    queueMicrotask(() => {
+      setSessionData(curr => ({
+        ...curr,
+        signalData: curr.signalData.map(signal => {
+          const signalDataUpdate = signalDataUpdates.find(s => s.qualifiedName === signal.qualifiedName);
+          return {
+            ...signal,
+            name: signalDataUpdate?.name ?? signal.name,
+            value: signalDataUpdate?.stringValue ?? signalDataUpdate?.doubleValue?.toString() ?? signal.value,
+            unit: signalDataUpdate?.unit ?? signal.unit,
+          };
+        }),
+      }));
+    });
   }, [setSessionData, signalDataUpdates]);
 
   return (
     <Box aria-label="canking-extension-view" height={'100%'} width={'100%'}>
       <div style={{ marginLeft: '4px', marginRight: '4px' }}>
         <SelectSignalsControl
-          selectedSignals={projectData.qualifiedSignalNames}
-          onSelectedSignalseChange={handleSelectedSignalsChange}
+          selectedSignalInfos={subscribedSignals}
+          onSelectedSignalInfosChange={handleSelectedSignalInfosChange}
           parentDialogTitle="Signal Data Table"
         />
         <TableContainer>
@@ -120,11 +143,11 @@ function WorkspaceView() {
             <TableBody>
               {sessionData.signalData.map(signal => (
                 <TableRow key={signal.qualifiedName} hover>
-                  <TableCell component="th" scope="row">
+                  <TableCell component="th" scope="row" width={'50%'}>
                     {signal.name}
                   </TableCell>
-                  <TableCell>{signal.value}</TableCell>
-                  <TableCell>{signal.unit}</TableCell>
+                  <TableCell width={'25%'}>{signal.value}</TableCell>
+                  <TableCell width={'25%'}>{signal.unit}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
