@@ -117,7 +117,7 @@ function WorkspaceView() {
           return {
             ...signal,
             name: signalDataUpdate?.name ?? signal.name,
-            value: signalDataUpdate?.stringValue ?? signalDataUpdate?.doubleValue.toString() ?? signal.value,
+            value: signalDataUpdate?.stringValue ?? signalDataUpdate?.doubleValue?.toString() ?? signal.value,
             unit: signalDataUpdate?.unit ?? signal.unit,
           };
         }),
