@@ -22,5 +22,6 @@ The 'Signal Table' view will now be available inside CanKing.
 
 ## Version History
 
+- **v1.2.0** Updated for CanKing 7.6
 - **v1.1.0** Updated for CanKing 7.4
 - **v1.0.0** Initial version for CanKing 7.3
