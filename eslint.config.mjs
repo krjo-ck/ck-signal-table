@@ -5,6 +5,7 @@ import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 
 export default [
+  { ignores: ['dist/'] },
   js.configs.recommended,
   react.configs.flat.recommended,
   react.configs.flat['jsx-runtime'],
