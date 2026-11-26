@@ -24,7 +24,8 @@
     "canking": "cross-env \"C:/Program Files/Kvaser CanKing/Kvaser CanKing.exe\" --ck-debug-pkg \"./package.json\" --ck-debug-port 4000",
     "build": "tsc -b && vite build",
     "prepack": "npm run build",
-    "prebuild": "rimraf dist"
+    "prebuild": "rimraf dist",
+    "package": "npm pack && \"C:/Program Files/Kvaser CanKing/service/ck.exe\" extension pack --readme \"./README.md\" --license \"./LICENSE\" --repository \"https://github.com/krjo-ck/ck-signal-table\" --min-canking-version \"7.6.1\""
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
